@@ -4,44 +4,33 @@
 #
 #*********************************************************************************************************
 
-# read from XLS file for Manhattan and do a EDA
-require(gdata)
-manhattan.sales <- read.xls("rollingsales_manhattan.xls", pattern="BOROUGH")
-head(manhattan.sales)
-summary(manhattan.sales)
+# Linear Regression
 
-# cleans the data
-manhattan.sales$sale.price.n <- as.numeric(gsub("[^[:digit:]]", "", manhattan.sales$SALE.PRICE))
-a <- count(is.na(manhattan.sales$SALE.PRICE.N))
-names(manhattan.sales) < tolower(names(manhattan.sales))
+# Exercise
+# From a normal distribution, simulate 1000 values with mean of 5 and sd of 7
+x_1 <- rnorm(1000, 5, 7)
 
-# clean/format the data with regular expressions
-manhattan.sales$gross.sqft <- as.numeric(gsub("[^[:digit:]]", "", manhattan.sales$GROSS.SQUARE.FEET))
-manhattan.sales$land.sqft <- as.numeric(gsub("[^[:digit:]]", "", manhattan.sales$LAND.SQUARE.FEET))
-manhattan.sales$sale.date <- as.Date(manhattan.sales$SALE.DATE)
-manhattan.sales$year.built <- as.numeric(as.character(manhattan.sales$YEAR.BUILT))
+# plot p(x)
+hist(x_1, col="grey")
 
-# do some exploration to make sure there's not anything weird going on with sales price
-attach(manhattan.sales)
-hist(sale.price.n)
-hist(sale.price.n[sale.price.n>0])
-hist(gross.sqft[sale.price.n==0])
-detach(manhattan.sales)
+true_error <- rnorm(1000, 0, 2)
+true_beta_0 <- 1.1
+true_beta_1 <- -8.2
 
-# keep only the actual sales
-manhattan.real.sales <- manhattan.sales[manhattan.sales$sale.price.n != 0,]
+y <- true_beta_0 + true_beta_1*x_1 + true_error
+hist(y) # plot p(y)
+plot(x_1, y, pch=20, col="red") # plot p(x, y)
 
-plot(manhattan.real.sales$gross.sqft, manhattan.real.sales$sale.price.n)
-plot(log(manhattan.real.sales$gross.sqft), log(manhattan.real.sales$sale.price.n))
+model <- lm(y ~ x_1) # build regression model
+coefs <- coef(model) # check the coefficients
+plot(x_1, y, pch=20, col="red") # plot p(x, y)
+abline(coefs[1], coefs[2]) # plot the absolute line of the coefficients
+summary(model)
 
-# for now, let's look at 1-, 2- and 3-family home
-manhattan.home <- manhattan.real.sales[which(grepl("FAMILY", 
-                                                   manhattan.real.sales$BUILDING.CLASS.CATEGORY)), ]
-plot(log(manhattan.home$gross.sqft), log(manhattan.home$sale.price.n))
+############################################################################################
+# k-Nearest Neighbours (k-NN)
+############################################################################################
 
-manhattan.home[which(manhattan.home$sale.price.n < 100000), ][order(manhattan.home[which(manhattan.home$sale.price.n < 1000000), ]$sale.price.n),]
+###### Credit Scores Example ######
+# read the data points
 
-# remove outliers that seem like they weren't actual sales
-manhattan.home$outliers <- (log(manhattan.home$sale.price.n) <= 5) + 0
-manhattan.home <- manhattan.home[which(manhattan.home$outliers == 0), ]
-plot(log(manhattan.home$gross.sqft), log(manhattan.home$sale.price.n))
