@@ -32,5 +32,55 @@ summary(model)
 ############################################################################################
 
 ###### Credit Scores Example ######
-# read the data points
+# read the data points from Excel randomizer
+creditscore <- read.xls("creditscore.xlsx")
+plot(creditscore$age, creditscore$income, main="Scatterplot", xlab="age", ylab="income", pch=20)
+scatterplot(income ~ age | credit, data=creditscore, 
+            xlab="age", ylab="income", main="Enhanced Scatterplot", pch=20)
 
+# PREPARATION OF TRAINING AND TEST SETS
+
+n.points <- 1000 # number of rows in the dataset
+sampling.rate <- 0.8
+
+# need the number of points in the test set to calculate the misclassification rate
+num.test.set.labels <- n.points * (1 - sampling.rate)
+
+# randomly sample which rows will go in the training set
+training <- sample(1:n.points, sampling.rate*n.points, replace=FALSE)
+
+# define the training set to be those rows
+train <- subset(creditscore[training, ], select=c(age, income))
+
+# the other rows are going into the test set
+testing <- setdiff(1:n.points, training)
+test <- subset(creditscore[testing, ], select=c(age, income))
+
+# this is the subset of labels for the training set
+c1 <- creditscore$credit[training]
+# subset of labels for the test set that we're witholding these
+true.labels <- creditscore$credit[testing]
+
+# PICK AN EVALUATION METRIC
+# Not an easy thing or universal thing to do. Need to work with domain expert. 
+require(class)
+library(class)
+knn(train, test, c1, k=3)
+
+# the other way to find out which k is correct is to loop through and see what the 
+# misclassifcation rate is for different values of k
+for (k in 1:20)
+{
+  print(k)
+  predicted.labels <- knn(train, test, c1, k)
+  num.incorrect.labels <- sum(predicted.labels != true.labels)
+  misclassification.rate <- num.incorrect.labels / num.test.set.labels
+  print(misclassification.rate) 
+}
+
+# choose the k value with the lowest mis-classification rate
+test <- c(57, 37)
+
+#*********************************************************************************************************
+# Linear Regression on the housing dataset
+#*********************************************************************************************************
